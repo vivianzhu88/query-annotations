@@ -17,6 +17,7 @@ API_KEY = ""
 
 def toSpreadsheet(filesList):
 #put filename and RIDs into to Excel spreadsheet
+    #RIDs
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     row = 1
@@ -27,12 +28,25 @@ def toSpreadsheet(filesList):
             row += 1
 
     workbook.save(filename="fileRIDs.xlsx")
+    
+    #Rterms
+    workbook2 = openpyxl.Workbook()
+    sheet = workbook2.active
+    row = 1
+    for f in filesList:
+        if f.getRIDs():
+            sheet.cell(row=row, column=1, value=f.getName())
+            sheet.cell(row=row, column=2, value=', '.join(f.getRterms()))
+            row += 1
+
+    workbook2.save(filename="fileRterms.xlsx")
 
 class File():
     def __init__(self, filename):
     #initialize each file
         self.filename = filename
         self.RIDs = []
+        self.Rterms = []
         self.text = ""
     
     def getName(self):
@@ -42,6 +56,10 @@ class File():
     def getRIDs(self):
     #return RIDs list
         return self.RIDs
+    
+    def getRterms(self):
+    #return Rterms list
+        return self.Rterms
     
     def openFile(self):
     #open file and retrieve text
@@ -95,12 +113,18 @@ class File():
                     print(f"Error retrieving {result['annotatedClass']['@id']}")
                     continue
             
-            #get each RIDs correlating with text
+            #get each RIDs + remove duplicates
             id = class_details["@id"]
             rid = id[22:]
             
             if rid not in self.RIDs:
                 self.RIDs.append(id[22:])
+                
+            #get each Rterms + remove duplicates
+            rterm = class_details["prefLabel"]
+            
+            if rterm not in self.Rterms:
+                self.Rterms.append(rterm)
     
     def getContents(self):
     #runs all the methods needed to parse files and get annotations

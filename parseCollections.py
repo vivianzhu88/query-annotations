@@ -28,7 +28,7 @@ def toSpreadsheet(filesList):
     for f in filesList:
         if f.getRIDs():
             sheet.cell(row=row, column=1, value=f.getName())
-            sheet.cell(row=row, column=2, value=', '.join(f.getRIDs()))
+            sheet.cell(row=row, column=2, value=' | '.join(f.getRIDs()))
             row += 1
 
     workbook.save(filename="filepath_and_RIDs.xlsx")
@@ -44,7 +44,7 @@ def toSpreadsheet(filesList):
     for f in filesList:
         if f.getRIDs():
             sheet.cell(row=row, column=1, value=f.getName())
-            sheet.cell(row=row, column=2, value=', '.join(f.getRterms()))
+            sheet.cell(row=row, column=2, value=' | '.join(f.getRterms()))
             row += 1
 
     workbook2.save(filename="filepath_and_Rterms.xlsx")
@@ -109,8 +109,8 @@ class File():
             return [self.text[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
         return [self.text]
         
-    def mapRIDs(self, annotations, get_class=True):
-    #take annotations and map to Excel spreadsheet of labels and corresponding RIDs
+    def getRadLex(self, annotations, get_class=True):
+    #take annotations and makes list of RadLex IDs and terms
         #iterate through annotations
         for result in annotations:
             class_details = result["annotatedClass"]
@@ -144,7 +144,7 @@ class File():
             for t in texts:
                 try:
                     annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
-                    self.mapRIDs(annotations)
+                    self.getRadLex(annotations)
                 except SocketError as e:
                     pass
         except urllib.error.HTTPError:

@@ -112,7 +112,8 @@ class File():
             for para in doc.paragraphs:
                 txt = para.text.encode('ascii', 'ignore')
                 fullText.append(txt)
-            self.text = b'\n'.join(fullText)
+            self.text = ' '.join(fullText)
+            print(self.text)
         except:
             print(self.filename)
             
@@ -162,32 +163,35 @@ class File():
             if rterm not in self.Rterms:
                 self.Rterms.append(rterm)
         
-    def getAnnotations(self):
+    def getAnnotations(self, name):
+        print(name)
         while not self.exit_flag:
             if not self.work_queue.empty():
                 t = self.work_queue.get()
-
+                print(name,"entered")
                 while True: #keep trying to send request to URL
                     try:
                         annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
-                        print("annotated")
+                        print(name,"annotated")
                         self.getRadLex(annotations)
-                        print("radlex")
+                        print(name,"radlex")
           
                     except (ConnectionResetError,urllib.error.HTTPError): #try requesting again
-                        print("too many req")
+                        print(name,"too many req")
                         time.sleep(10)
                         continue
                     break
-                    print("req done")
-        print("exited")
+            elif self.exit_flag or self.work_queue.empty():
+                break
+        print(name,"exited")
     
     class MyThread (threading.Thread):
-        def __init__(self, file):
+        def __init__(self, name, file):
             threading.Thread.__init__(self)
+            self.name = name
             self.file = file
         def run(self):
-            self.file.getAnnotations()
+            self.file.getAnnotations(self.name)
     
     def getContents(self):
     #runs all the methods needed to parse files and get annotations
@@ -197,14 +201,14 @@ class File():
         thread_count = os.cpu_count()
         threads = []
         
-        for i in range(1,thread_count+1):
-            thd = self.MyThread(self)
-            thd.start()
-            threads.append(thd)
-        
         for t in texts:
             self.work_queue.put(t)
-
+        
+        for i in range(1,thread_count+1):
+            thd = self.MyThread("t"+str(i),self)
+            thd.start()
+            threads.append(thd)
+            
         while not self.work_queue.empty():
             pass
 
@@ -238,5 +242,3 @@ for f in filesList:
     
 end = time.time()
 print(end-start)
-    
-

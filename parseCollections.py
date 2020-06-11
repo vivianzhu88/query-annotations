@@ -2,6 +2,7 @@ import urllib.request, urllib.error, urllib.parse
 import json
 import os
 import openpyxl
+from openpyxl import load_workbook
 import time
 from pprint import pprint
 from socket import error as SocketError
@@ -17,39 +18,48 @@ import queue
 REST_URL = "http://data.bioontology.org"
 ONT = "&ontologies=RADLEX"
 API_KEY = ""
-class Found(Exception): pass
 
-def toSpreadsheet(filesList):
-#put filename and RIDs into to Excel spreadsheet
+def createSpreadsheet():
+#create Excel spreadsheets
     #RIDs
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     
     sheet.cell(row=1, column=1, value="File Path")
     sheet.cell(row=1, column=2, value="RIDs")
-    
-    row = 2
-    for f in filesList:
-        if f.getRIDs():
-            sheet.cell(row=row, column=1, value=f.getName())
-            sheet.cell(row=row, column=2, value=' | '.join(f.getRIDs()))
-            row += 1
 
     workbook.save(filename="filepath_and_RIDs.xlsx")
-    
+
     #Rterms
     workbook2 = openpyxl.Workbook()
     sheet = workbook2.active
     
     sheet.cell(row=1, column=1, value="File Path")
     sheet.cell(row=1, column=2, value="Rterms")
+
+    workbook2.save(filename="filepath_and_Rterms.xlsx")
+
+def toSpreadsheet(f):
+#put filename and RIDs into to Excel spreadsheet
+    #RIDs
+    workbook = load_workbook("filepath_and_RIDs.xlsx")
+    sheet = workbook.active
     
-    row = 2
-    for f in filesList:
-        if f.getRIDs():
-            sheet.cell(row=row, column=1, value=f.getName())
-            sheet.cell(row=row, column=2, value=' | '.join(f.getRterms()))
-            row += 1
+    if f.getRIDs():
+        r = sheet.max_row+1
+        sheet.cell(row=r, column=1, value=f.getName())
+        sheet.cell(row=r, column=2, value=' | '.join(f.getRIDs()))
+
+    workbook.save(filename="filepath_and_RIDs.xlsx")
+
+    #Rterms
+    workbook2 = load_workbook("filepath_and_Rterms.xlsx")
+    sheet = workbook2.active
+    
+    if f.getRIDs():
+        r = sheet.max_row+1
+        sheet.cell(row=r, column=1, value=f.getName())
+        sheet.cell(row=r, column=2, value=' | '.join(f.getRterms()))
 
     workbook2.save(filename="filepath_and_Rterms.xlsx")
 
@@ -61,10 +71,11 @@ class File():
         self.Rterms = []
         self.text = ""
         self.exit_flag = False
+        self.work_queue = None
     
     def getName(self):
     #return filename
-        return self.filename[46:]
+        return self.filename[64:]
         
     def getText(self):
     #return text
@@ -116,8 +127,10 @@ class File():
 
         if len(self.text) > 1:
             txt = re.findall(r"[\w']+", self.text)
-            chunks, chunk_size = len(txt), 500
-            return [self.text[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
+            chunks, chunk_size = len(txt), 490
+            text = [" ".join(txt[i:i+chunk_size]) for i in range(0, chunks, chunk_size)]
+            print(text)
+            return text
             
         return [self.text]
         
@@ -127,79 +140,86 @@ class File():
         for result in annotations:
             class_details = result["annotatedClass"]
             if get_class:
-                try:
-                    class_details = self.get_json(result["annotatedClass"]["links"]["self"])
-                except urllib.error.HTTPError:
-                    #print(f"Error retrieving {result['annotatedClass']['@id']}")
-                    continue
-            
+                while True:
+                    try:
+                        class_details = self.get_json(result["annotatedClass"]["links"]["self"])
+                    except urllib.error.HTTPError:
+                        print(f"Error retrieving {result['annotatedClass']['@id']}")
+                        time.sleep(5)
+                        continue
+                    break
+
             #get each RIDs + remove duplicates
             id = class_details["@id"]
             rid = id[22:]
             
             if rid not in self.RIDs:
                 self.RIDs.append(id[22:])
-                
+            
             #get each Rterms + remove duplicates
             rterm = class_details["prefLabel"]
             
             if rterm not in self.Rterms:
                 self.Rterms.append(rterm)
         
-    def getAnnotations(self, q):
+    def getAnnotations(self):
         while not self.exit_flag:
-            if not q.empty():
-                t = q.get()
+            if not self.work_queue.empty():
+                t = self.work_queue.get()
 
                 while True: #keep trying to send request to URL
                     try:
                         annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
+                        print("annotated")
                         self.getRadLex(annotations)
+                        print("radlex")
           
                     except (ConnectionResetError,urllib.error.HTTPError): #try requesting again
                         print("too many req")
                         time.sleep(10)
                         continue
                     break
-
+                    print("req done")
+        print("exited")
+    
     class MyThread (threading.Thread):
-        def __init__(self, name, q, file):
+        def __init__(self, file):
             threading.Thread.__init__(self)
-            self.name = name
-            self.q = q
             self.file = file
         def run(self):
-            self.file.getAnnotations(self.q)
+            self.file.getAnnotations()
     
     def getContents(self):
     #runs all the methods needed to parse files and get annotations
         self.openFile()
         texts = self.split_text() #split text into 500 word pieces
-        work_queue = queue.Queue(len(texts))
+        self.work_queue = queue.Queue(len(texts))
         thread_count = os.cpu_count()
         threads = []
         
         for i in range(1,thread_count+1):
-            thd = self.MyThread("t"+str(i), work_queue, self)
+            thd = self.MyThread(self)
             thd.start()
             threads.append(thd)
         
         for t in texts:
-            work_queue.put(t)
+            self.work_queue.put(t)
 
-        while not work_queue.empty():
+        while not self.work_queue.empty():
             pass
 
         self.exit_flag = True
+        print("done")
 
         for t in threads:
             t.join()
+        print("joined")
 
 #put all of file paths in Chest_and_Lung_Collections directory into a list
 start = time.time()
 filesList = []
 
-dir_path = "/Users/vivianzhu/Documents/Annotator/"
+dir_path = "/Users/vivianzhu/Documents/Annotator/Chest_and_Lung_Collections"
 for dp,_,filenames in os.walk(dir_path):
    for f in filenames:
        if f != ".DS_Store":
@@ -207,10 +227,15 @@ for dp,_,filenames in os.walk(dir_path):
            filesList.append(f)
 
 count = 0
-for f in filesList:    
+createSpreadsheet()
+
+for f in filesList:
+    print(f.getName())
     f.getContents()
+    print("content")
+    toSpreadsheet(f)
+    print("updated")
     
-toSpreadsheet(filesList)
 end = time.time()
 print(end-start)
     

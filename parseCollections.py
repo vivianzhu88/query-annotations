@@ -10,10 +10,13 @@ import pandas as pd
 from pandas import ExcelWriter
 from pandas import ExcelFile
 import docx
+import re
+import threading
 
 REST_URL = "http://data.bioontology.org"
 ONT = "&ontologies=RADLEX"
 API_KEY = ""
+class Found(Exception): pass
 
 def toSpreadsheet(filesList):
 #put filename and RIDs into to Excel spreadsheet
@@ -59,7 +62,11 @@ class File():
     
     def getName(self):
     #return filename
-        return self.filename[64:]
+        return self.filename[46:]
+        
+    def getText(self):
+    #return text
+        return self.text
     
     def getRIDs(self):
     #return RIDs list
@@ -102,11 +109,14 @@ class File():
         opener.addheaders = [('Authorization', 'apikey token=' + API_KEY)]
         return json.loads(opener.open(url).read())
         
-    def split_text(self, number):
-    #split text into smaller pieces for Annotator to handle
+    def split_text(self):
+    #split text into 500 word pieces for Annotator to handle
+
         if len(self.text) > 1:
-            chunks, chunk_size = len(self.text), len(self.text)//number
+            txt = re.findall(r"[\w']+", self.text)
+            chunks, chunk_size = len(txt), 500
             return [self.text[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
+            
         return [self.text]
         
     def getRadLex(self, annotations, get_class=True):
@@ -133,35 +143,55 @@ class File():
             
             if rterm not in self.Rterms:
                 self.Rterms.append(rterm)
+
+    def getAnnotations(self):
+        while True: #keep trying to send request to URL
+            try:
+                annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
+                print(annotations)
+                self.getRadLex(annotations)
+  
+            except ConnectionResetError: #try requesting again
+                print("too many req")
+                time.sleep(20)
+                continue
+            break
     
     def getContents(self):
     #runs all the methods needed to parse files and get annotations
         self.openFile()
-        
-        i = 1
-        try:
-            texts = self.split_text(i)
-            for t in texts:
+
+        texts = self.split_text() #split text into 500 word pieces
+
+        for t in texts:
+            while True: #keep trying to send request to URL
                 try:
                     annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
+                    print(annotations)
                     self.getRadLex(annotations)
-                except SocketError as e:
-                    pass
-        except urllib.error.HTTPError:
-            i += 1
-            
+      
+                except ConnectionResetError: #try requesting again
+                    print("too many req")
+                    time.sleep(20)
+                    continue
+                break
+
 #put all of file paths in Chest_and_Lung_Collections directory into a list
 filesList = []
 
-dir_path = "/Users/vivianzhu/Documents/Annotator/Chest_and_Lung_Collections/"
+dir_path = "/Users/vivianzhu/Documents/Annotator"
 for dp,_,filenames in os.walk(dir_path):
    for f in filenames:
        if f != ".DS_Store":
            f = File(os.path.abspath(os.path.join(dp, f)))
            filesList.append(f)
+print("done")
 
+count = 0
 for f in filesList:
+        
     f.getContents()
+    print("one file")
     
 toSpreadsheet(filesList)
     

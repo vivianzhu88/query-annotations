@@ -12,6 +12,7 @@ from pandas import ExcelFile
 import docx
 import re
 import threading
+import queue
 
 REST_URL = "http://data.bioontology.org"
 ONT = "&ontologies=RADLEX"
@@ -59,6 +60,7 @@ class File():
         self.RIDs = []
         self.Rterms = []
         self.text = ""
+        self.exit_flag = False
     
     def getName(self):
     #return filename
@@ -128,7 +130,7 @@ class File():
                 try:
                     class_details = self.get_json(result["annotatedClass"]["links"]["self"])
                 except urllib.error.HTTPError:
-                    print(f"Error retrieving {result['annotatedClass']['@id']}")
+                    #print(f"Error retrieving {result['annotatedClass']['@id']}")
                     continue
             
             #get each RIDs + remove duplicates
@@ -143,57 +145,73 @@ class File():
             
             if rterm not in self.Rterms:
                 self.Rterms.append(rterm)
+        
+    def getAnnotations(self, q):
+        while not self.exit_flag:
+            if not q.empty():
+                t = q.get()
 
-    def getAnnotations(self):
-        while True: #keep trying to send request to URL
-            try:
-                annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
-                print(annotations)
-                self.getRadLex(annotations)
-  
-            except ConnectionResetError: #try requesting again
-                print("too many req")
-                time.sleep(20)
-                continue
-            break
+                while True: #keep trying to send request to URL
+                    try:
+                        annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
+                        self.getRadLex(annotations)
+          
+                    except (ConnectionResetError,urllib.error.HTTPError): #try requesting again
+                        print("too many req")
+                        time.sleep(10)
+                        continue
+                    break
+
+    class MyThread (threading.Thread):
+        def __init__(self, name, q, file):
+            threading.Thread.__init__(self)
+            self.name = name
+            self.q = q
+            self.file = file
+        def run(self):
+            self.file.getAnnotations(self.q)
     
     def getContents(self):
     #runs all the methods needed to parse files and get annotations
         self.openFile()
-
         texts = self.split_text() #split text into 500 word pieces
-
+        work_queue = queue.Queue(len(texts))
+        thread_count = os.cpu_count()
+        threads = []
+        
+        for i in range(1,thread_count+1):
+            thd = self.MyThread("t"+str(i), work_queue, self)
+            thd.start()
+            threads.append(thd)
+        
         for t in texts:
-            while True: #keep trying to send request to URL
-                try:
-                    annotations = self.get_json(REST_URL + "/annotator?text=" + urllib.parse.quote(t) + ONT)
-                    print(annotations)
-                    self.getRadLex(annotations)
-      
-                except ConnectionResetError: #try requesting again
-                    print("too many req")
-                    time.sleep(20)
-                    continue
-                break
+            work_queue.put(t)
+
+        while not work_queue.empty():
+            pass
+
+        self.exit_flag = True
+
+        for t in threads:
+            t.join()
 
 #put all of file paths in Chest_and_Lung_Collections directory into a list
+start = time.time()
 filesList = []
 
-dir_path = "/Users/vivianzhu/Documents/Annotator"
+dir_path = "/Users/vivianzhu/Documents/Annotator/"
 for dp,_,filenames in os.walk(dir_path):
    for f in filenames:
        if f != ".DS_Store":
            f = File(os.path.abspath(os.path.join(dp, f)))
            filesList.append(f)
-print("done")
 
 count = 0
-for f in filesList:
-        
+for f in filesList:    
     f.getContents()
-    print("one file")
     
 toSpreadsheet(filesList)
-    
+end = time.time()
+print(end-start)
     
 

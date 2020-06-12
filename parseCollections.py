@@ -38,6 +38,14 @@ def createSpreadsheet():
     sheet.cell(row=1, column=2, value="Rterms")
 
     workbook2.save(filename="filepath_and_Rterms.xlsx")
+    
+    workbook3 = openpyxl.Workbook()
+    sheet = workbook3.active
+    
+    sheet.cell(row=1, column=1, value="File Path")
+    sheet.cell(row=1, column=2, value="RadLex")
+
+    workbook3.save(filename="none.xlsx")
 
 def toSpreadsheet(f):
 #put filename and RIDs into to Excel spreadsheet
@@ -62,6 +70,33 @@ def toSpreadsheet(f):
         sheet.cell(row=r, column=2, value=' | '.join(f.getRterms()))
 
     workbook2.save(filename="filepath_and_Rterms.xlsx")
+    
+    #None
+    workbook3 = load_workbook("none.xlsx")
+    sheet = workbook3.active
+    if not f.getRIDs():
+        r = sheet.max_row+1
+        sheet.cell(row=r, column=1, value=f.getName())
+        sheet.cell(row=r, column=2, value="None")
+    workbook3.save(filename="none.xlsx")
+    
+    
+def check(filename):
+    #check if file has already been annotated
+    workbook = load_workbook("filepath_and_RIDs.xlsx")
+    sheet = workbook.active
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        filepath, radlex = row
+        if filepath == filename:
+            return True
+            
+    workbook2 = load_workbook("none.xlsx")
+    sheet2 = workbook2.active
+    for row in sheet2.iter_rows(min_row=2, values_only=True):
+        filepath, x = row
+        if filepath == filename:
+            return True
+    return False
 
 class File():
     def __init__(self, filename):
@@ -159,10 +194,10 @@ class File():
             
             #get each Rterms + remove duplicates
             rterm = class_details["prefLabel"]
-            
+
             if rterm not in self.Rterms:
                 self.Rterms.append(rterm)
-        
+            
     def getAnnotations(self, name):
         print(name)
         while not self.exit_flag:
@@ -181,8 +216,8 @@ class File():
                         time.sleep(10)
                         continue
                     break
-            elif self.exit_flag or self.work_queue.empty():
-                break
+            '''elif self.exit_flag or self.work_queue.empty():
+                break'''
         print(name,"exited")
     
     class MyThread (threading.Thread):
@@ -218,6 +253,7 @@ class File():
         for t in threads:
             t.join()
         print("joined")
+        self.done = True
 
 #put all of file paths in Chest_and_Lung_Collections directory into a list
 start = time.time()
@@ -231,14 +267,19 @@ for dp,_,filenames in os.walk(dir_path):
            filesList.append(f)
 
 count = 0
-createSpreadsheet()
+#createSpreadsheet()
 
 for f in filesList:
+    count +=1
     print(f.getName())
-    f.getContents()
-    print("content")
-    toSpreadsheet(f)
-    print("updated")
+    if not check(f.getName()):
+        f.getContents()
+        print("content")
+        toSpreadsheet(f)
+        print("updated")
+    else:
+        print("already done")
+    print(count,"/",len(filesList))
     
 end = time.time()
 print(end-start)

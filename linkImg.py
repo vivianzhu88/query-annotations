@@ -1,6 +1,6 @@
-from openpyxl import load_workbook
 from xml.dom import minidom
 import openpyxl
+from openpyxl import load_workbook
 from lxml import etree
 
 #link = 'https://www.cancerimagingarchive.net/viewer/?study=' + study + '&series=' + series #useful?
@@ -17,19 +17,20 @@ def createSpreadsheet():
     sheet.cell(row=1, column=8, value="imageSop_UID")
     workbook.save(filename="LIDC-IDRI.xlsx")
     
-def toSpreadsheet(d):
+def toSpreadsheet(data):
     workbook = load_workbook("LIDC-IDRI.xlsx")
     sheet = workbook.active
     
-    r = sheet.max_row+1
-    sheet.cell(row=r, column=1, value=d[0])
-    sheet.cell(row=r, column=2, value=d[1])
-    sheet.cell(row=r, column=3, value=d[2])
-    sheet.cell(row=r, column=4, value=d[3])
-    sheet.cell(row=r, column=5, value=d[4])
-    sheet.cell(row=r, column=6, value=d[5])
-    sheet.cell(row=r, column=7, value=d[6])
-    sheet.cell(row=r, column=8, value=d[7])
+    for d in data:
+        r = sheet.max_row+1
+        sheet.cell(row=r, column=1, value=d[0])
+        sheet.cell(row=r, column=2, value=d[1])
+        sheet.cell(row=r, column=3, value=d[2])
+        sheet.cell(row=r, column=4, value=d[3])
+        sheet.cell(row=r, column=5, value=d[4])
+        sheet.cell(row=r, column=6, value=d[5])
+        sheet.cell(row=r, column=7, value=d[6])
+        sheet.cell(row=r, column=8, value=d[7])
     
     workbook.save(filename="LIDC-IDRI.xlsx")
 
@@ -37,54 +38,47 @@ def getUIDs():
 #Collect all unique imageSOP_UIDs for each RadLex ID/term in LIDC-IDRI
     workbook = load_workbook(filename="freq.xlsx")
     sheet = workbook.active
-    data = []
     parser = etree.XMLParser(encoding='UTF-8')
     
-    for row in sheet.iter_rows(min_row=3, values_only=True):
+    for row in sheet.iter_rows(min_row=2, max_row=2, values_only=True):
         rid, rterm, count, filepaths = row
         files = filepaths.split(" | ")
+        data = []
         for f in files:
             if f[:70] == "LIDC-IDRI/LIDC-IDRI_RadiologistAnnotationsSegmentations/tcia-lidc-xml/":
                 try:
                     filepath = "Chest_and_Lung_Collections/" + f
-                    tree = etree.parse(filepath, parser=parser)
+                    xml_data = minidom.parse("Chest_and_Lung_Collections/" + f)
+                    
                 except (FileNotFoundError, OSError):
                     print(filepath)
                     continue
+                
+                nodes = xml_data.getElementsByTagName('unblindedReadNodule')
+                for n in nodes:
+                    ID = n.getElementsByTagName('noduleID')[0].firstChild.nodeValue
+                    z_pos = n.getElementsByTagName('imageZposition')[0].firstChild.nodeValue
+                    x_coord = n.getElementsByTagName('xCoord')[0].firstChild.nodeValue
+                    y_coord = n.getElementsByTagName('yCoord')[0].firstChild.nodeValue
+                    UID = n.getElementsByTagName('imageSOP_UID')[0].firstChild.nodeValue
+                    d = [rterm, rid, "Nodule", ID, z_pos, x_coord, y_coord, UID]
+                    data.append(d)
                     
-                e = tree.findall('unblindedReadNodule')
-                for i in e:
-                    ID = i.find('noduleID').text
-                    z_pos = i.find('imageZposition').text
-                    x_coord = i.find('xCoord').text
-                    y_coord = i.find('yCoord').text
-                    UID = i.find('imageSOP_UID').text
-                    
-                    data.append([rterm, rid, "Nodule", id, z_pos, x_coord, y_coord, UID])
-                    
-                e = tree.findall('nonNodule')
-                for i in e:
-                    ID = i.find('nonNoduleID').text
-                    z_pos = i.find('imageZposition').text
-                    x_coord = i.find('xCoord').text
-                    y_coord = i.find('yCoord').text
-                    UID = i.find('imageSOP_UID').text
-                    
-                    data.append([rterm, rid, "NonNodule", id, z_pos, x_coord, y_coord, UID])
+                nodes = xml_data.getElementsByTagName('nonNodule')
+                for n in nodes:
+                    ID = n.getElementsByTagName('nonNoduleID')[0].firstChild.nodeValue
+                    z_pos = n.getElementsByTagName('imageZposition')[0].firstChild.nodeValue
+                    x_coord = n.getElementsByTagName('xCoord')[0].firstChild.nodeValue
+                    y_coord = n.getElementsByTagName('yCoord')[0].firstChild.nodeValue
+                    UID = n.getElementsByTagName('imageSOP_UID')[0].firstChild.nodeValue
+                    d = [rterm, rid, "NonNodule", ID, z_pos, x_coord, y_coord, UID]
+                    data.append(d)
+        
+        if data:
+            toSpreadsheet(data)
                         
-    data.sort(key=lambda x: x[0])
-    return data
 
 #Put data into Excel spreadsheet
-createSpreadsheet()
+#createSpreadsheet()
 
-data = getUIDs()
-row = 2
-for d in data:
-    toSpreadsheet(d)
-
-                
-
-
-        
-        
+getUIDs()

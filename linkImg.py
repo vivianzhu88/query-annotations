@@ -2,6 +2,7 @@ from xml.dom import minidom
 import openpyxl
 from openpyxl import load_workbook
 from lxml import etree
+import json
 
 #link = 'https://www.cancerimagingarchive.net/viewer/?study=' + study + '&series=' + series #useful?
 def createSpreadsheet():
@@ -58,11 +59,13 @@ def checkTag(tag):
 
 def getUIDs():
 #Collect all unique imageSOP_UIDs for each RadLex ID/term in LIDC-IDRI
+
     workbook = load_workbook(filename="freq.xlsx")
     sheet = workbook.active
     parser = etree.XMLParser(encoding='UTF-8')
     
     filedata  = {}
+    
     for row in sheet.iter_rows(min_row=2, values_only=True):
         rid, rterm, count, filepaths = row
         files = filepaths.split(" | ")
@@ -140,6 +143,6 @@ def getUIDs():
                         
 
 #Put data into Excel spreadsheet
-#createSpreadsheet()
+createSpreadsheet()
 
 getUIDs()

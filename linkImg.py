@@ -3,6 +3,7 @@ import openpyxl
 from openpyxl import load_workbook
 from lxml import etree
 import json
+import csv
 
 filedata =  {}
 #link = 'https://www.cancerimagingarchive.net/viewer/?study=' + study + '&series=' + series #useful?
@@ -33,24 +34,59 @@ def toSpreadsheet(data, rterm, rid):
     
     for d in data:
         r = sheet.max_row+1
-        sheet.cell(row=r, column=1, value=rterm)
-        sheet.cell(row=r, column=2, value=rid)
-        sheet.cell(row=r, column=3, value=d[0])
-        sheet.cell(row=r, column=4, value=d[1])
-        sheet.cell(row=r, column=5, value=d[2])
-        sheet.cell(row=r, column=6, value=d[3])
-        sheet.cell(row=r, column=7, value=d[4])
-        sheet.cell(row=r, column=8, value=d[5])
-        sheet.cell(row=r, column=9, value=d[6])
-        sheet.cell(row=r, column=10, value=d[7])
-        sheet.cell(row=r, column=11, value=d[8])
-        sheet.cell(row=r, column=12, value=d[9])
-        sheet.cell(row=r, column=13, value=d[10])
-        sheet.cell(row=r, column=14, value=d[11])
-        sheet.cell(row=r, column=15, value=d[12])
-        sheet.cell(row=r, column=16, value=d[13])
+        sheet.cell(row=r, column=1, value=d[0])
+        sheet.cell(row=r, column=2, value=d[1])
+        sheet.cell(row=r, column=3, value=d[2])
+        sheet.cell(row=r, column=4, value=d[3])
+        sheet.cell(row=r, column=5, value=d[4])
+        sheet.cell(row=r, column=6, value=d[5])
+        sheet.cell(row=r, column=7, value=d[6])
+        sheet.cell(row=r, column=8, value=d[7])
+        sheet.cell(row=r, column=9, value=d[8])
+        sheet.cell(row=r, column=10, value=d[9])
+        sheet.cell(row=r, column=11, value=d[10])
+        sheet.cell(row=r, column=12, value=d[11])
+        sheet.cell(row=r, column=13, value=d[12])
+        sheet.cell(row=r, column=14, value=d[13])
+        sheet.cell(row=r, column=15, value=d[14])
+        sheet.cell(row=r, column=16, value=d[15])
     
     workbook.save(filename="LIDC-IDRI.xlsx")
+    
+def toJson(data):
+    output = []
+    for d in data:
+        x = {}
+        x["RadLex Term"] = d[0]
+        x["RadLex ID"] = d[1]
+        x["Nodule/NonNodule"] = d[2]
+        x["Nodule/NonNodule ID"] = d[3]
+        x["Subtlety"] = d[4]
+        x["Internal Structure"] = d[5]
+        x["Calcification"] = d[6]
+        x["Sphericity"] = d[7]
+        x["Margin"] = d[8]
+        x["Lobulation"] = d[9]
+        x["Spiculation"] = d[10]
+        x["Texture"] = d[11]
+        x["Malignancy"] = d[12]
+        x["Image Z Postion"] = d[13]
+        x["imageSop_UID"] = d[14]
+        x["XY Coordinates"] = d[15]
+        output.append(x)
+        
+    with open("LIDC-IDRI.json", "w") as outfile:
+        json.dump(output, outfile)
+
+def toCSV(data):
+    fields = ["RadLex Term", "RadLex ID", "Nodule/NonNodule", "Nodule/NonNodule ID", "Subtlety", "Internal Structure", "Calcification", "Sphericity", "Margin", "Lobulation", "Spiculation", "Texture", "Malignancy", "Image Z Postion", "imageSop_UID", "XY Coordinates"]
+    rows = data
+    filename = "LIDC-IDRI.csv"
+    
+    with open(filename, 'w') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(fields)
+        csvwriter.writerows(rows)
 
 def checkTag(tag):
     if tag:
@@ -121,6 +157,7 @@ def getData(f):
 def getUIDs():
 #Collect all unique imageSOP_UIDs for each RadLex ID/term in LIDC-IDRI
     parser = etree.XMLParser(encoding='UTF-8')
+    total_data = []
 
     with open('freq.json') as json_file:
         json_data = json.load(json_file)
@@ -131,24 +168,31 @@ def getUIDs():
             filepaths = row["File Paths"]
             files = filepaths.split(" | ")
             
-            data = []
+            r_data = []
             count =  0
             for f in files:
                 if f[:70] == "LIDC-IDRI/LIDC-IDRI_RadiologistAnnotationsSegmentations/tcia-lidc-xml/":
                     if f not in filedata.keys():
-                        data = getData(f)
+                        new_data = [ ([rterm, rid] + x) for x in getData(f)]
+                        r_data += new_data
                     else:
                         print("already exists")
-                        data = filedata[f]
+                        new_data = [ ([rterm, rid] + x) for x in filedata[f]]
+                        r_data += new_data
                     count+=1
                     print(count,"/",len(files) )
             
-            if data:
+            if r_data:
+                '''
                 print("to spreadsheet")
-                toSpreadsheet(data, rterm, rid)
+                toSpreadsheet(data)
                 print("done spreadsheet")
+                '''
+                total_data += r_data
             print(rterm)
-                        
+    
+    toJson(total_data)
+    toCSV(total_data)
 
 #Put data into Excel spreadsheet
 createSpreadsheet()

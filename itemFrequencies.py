@@ -1,5 +1,6 @@
 from openpyxl import load_workbook
 import openpyxl
+import json
 
 class RawData():
 #object for each RID and Rterms Excel file
@@ -28,7 +29,7 @@ class RawData():
             filepath, radlex = row
             rs = radlex.split(" | ")
             for r in rs:
-                if r in self.rDict:
+                if r in self.rDict.keys():
                     self.rDict[r].append(filepath)
                 else:
                     self.rDict[r] = [filepath]
@@ -39,24 +40,21 @@ class RawData():
     
     def writeResults(self, rawdata):
     #frequencies of all RadLex items sorted in order of most to least frequent
-        workbook = openpyxl.Workbook()
-        sheet = workbook.active
-        sheet.cell(row=1, column=1, value=self.itemName)
-        sheet.cell(row=1, column=2, value=rawdata.getItemName())
-        sheet.cell(row=1, column=3, value="Count")
-        sheet.cell(row=1, column=4, value="File Paths")
         
+        output = []
         rdItems = rawdata.getItems()
-        row = 2
+        c = 0
         for k in self.sortedKeys:
-            sheet.cell(row=row, column=1, value=k)
-            sheet.cell(row=row, column=2, value=rdItems[row-2])
-            sheet.cell(row=row, column=3, value=len(self.rDict[k]))
-            sheet.cell(row=row, column=4, value=' | '.join(self.rDict[k]))
-            row += 1
-    
-        fN = "freq.xlsx"
-        workbook.save(filename=fN)
+            d = {}
+            d[self.itemName] = k
+            d[rawdata.getItemName()] = rdItems[c]
+            d["Count"] = len(self.rDict[k])
+            d["File Paths"] = ' | '.join(self.rDict[k])
+            output.append(d)
+            c += 1
+        
+        with open("freq.json", "w") as outfile:
+            json.dump(output, outfile)
     
     def analyze(self):
     #call all the necessary methods in order

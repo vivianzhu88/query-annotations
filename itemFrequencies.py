@@ -1,69 +1,88 @@
 from openpyxl import load_workbook
 import openpyxl
 import json
+import pandas as pd
+import csv
 
 class RawData():
-#object for each RID and Rterms Excel file
-    def __init__(self, fN, itemName):
-        self.fN = fN
-        self.itemName = itemName
-        self.workbook = load_workbook(filename=fN)
-        self.sheet = self.workbook.active
+    #process both ID and Term files
+    def __init__(self, fN, fN2):
+        self.fN = fN #ID file
+        self.fN2 = fN2 #term file
         self.rDict = {}
+        self.countDict = {}
         self.sortedKeys = []
-    
-    def getItemName(self):
-    #return item name
-        return self.itemName
-    
-    def getItems(self):
-    #return list of RadLex RIDs or Rterms
-        items = []
-        for k in self.sortedKeys:
-            items.append(k)
-        return items
 
     def dictOfterms(self):
-    #create dictionary where key is the RadLex item, values are the filepaths
-        for row in self.sheet.iter_rows(min_row=2, values_only=True):
-            filepath, radlex = row
-            rs = radlex.split(" | ")
-            for r in rs:
-                if r in self.rDict.keys():
-                    self.rDict[r].append(filepath)
+    #create dictionary of ID + terms, another dictionary of ID + filepaths
+        c = 0
+        with open(self.fN) as file1, open(self.fN2) as file2:
+            for x, y in zip(file1,file2):
+                if c == 0: #skip header line
+                    c = 1
                 else:
-                    self.rDict[r] = [filepath]
+                    #clean csv
+                    x = x.rstrip()
+                    xx = x.split(",",1)
+                    filepath = xx[0]
+                    rids = xx[1]
+                    if '"' in rids:
+                        rids = rids[1:-1]
+                    rids = rids.split(" | ")
+                    
+                    y = y.rstrip()
+                    yy = y.split(",",1)
+                    filepath = yy[0]
+                    rterms = yy[1]
+                    if '"' in rterms:
+                        rterms = rterms[1:-1]
+                    rterms = rterms.split(" | ")
+                    
+                    #update dict of ID + terms
+                    d = dict(zip(rids, rterms))
+                    self.rDict = {**self.rDict, **d}
+                    
+                    #update dict of ID + filepaths
+                    for r in rids:
+                        if r in self.countDict.keys():
+                            self.countDict[r].append(filepath)
+                        else:
+                            self.countDict[r] = [filepath]
     
     def sortByLen(self):
-    #sort by number
-        self.sortedKeys = sorted(self.rDict, key=lambda k: len(self.rDict[k]), reverse=True)
+    #sort IDs by number of filepaths
+        self.sortedKeys = sorted(self.countDict, key=lambda k: len(self.countDict[k]), reverse=True)
     
-    def writeResults(self, rawdata):
-    #frequencies of all RadLex items sorted in order of most to least frequent
-        
+    def writeResults(self):
+    #write IDs/terms to JSON and CSV in decreasing frequency
         output = []
-        rdItems = rawdata.getItems()
+        
+        #to JSON
         c = 0
+        
         for k in self.sortedKeys:
             d = {}
-            d[self.itemName] = k
-            d[rawdata.getItemName()] = rdItems[c]
-            d["Count"] = len(self.rDict[k])
-            d["File Paths"] = ' | '.join(self.rDict[k])
+            d["NIDs"] = k
+            d["Nterms"] = self.rDict[k]
+            d["Count"] = len(self.countDict[k])
+            d["File Paths"] = ' | '.join(self.countDict[k])
             output.append(d)
             c += 1
         
         with open("freq.json", "w") as outfile:
             json.dump(output, outfile)
     
+        #to CSV
+        df = pd.read_json (r"freq.json")
+        df.to_csv (r"freq.csv", index = None)
+    
     def analyze(self):
     #call all the necessary methods in order
         self.dictOfterms()
         self.sortByLen()
-    
 
-IDs = RawData("filepath_and_RIDs.xlsx", "RIDs")
-IDs.analyze()
-Rterms = RawData("filepath_and_Rterms.xlsx", "Rterms")
-Rterms.analyze()
-IDs.writeResults(Rterms)
+f1 = "filepath_and_NIDs.csv"
+f2 = "filepath_and_Nterms.csv"
+data = RawData(f1, f2)
+data.analyze()
+data.writeResults()

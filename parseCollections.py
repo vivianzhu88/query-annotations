@@ -14,88 +14,61 @@ import docx
 import re
 import threading
 import queue
+import csv
 
 REST_URL = "http://data.bioontology.org"
-ONT = "&ontologies=RADLEX"
+ONT = "&ontologies=NCIT"
 API_KEY = ""
+rdict = {}
 
 def createSpreadsheet():
-#create Excel spreadsheets
-    #RIDs
-    workbook = openpyxl.Workbook()
-    sheet = workbook.active
-    
-    sheet.cell(row=1, column=1, value="File Path")
-    sheet.cell(row=1, column=2, value="RIDs")
-
-    workbook.save(filename="filepath_and_RIDs.xlsx")
-
-    #Rterms
-    workbook2 = openpyxl.Workbook()
-    sheet = workbook2.active
-    
-    sheet.cell(row=1, column=1, value="File Path")
-    sheet.cell(row=1, column=2, value="Rterms")
-
-    workbook2.save(filename="filepath_and_Rterms.xlsx")
-    
-    workbook3 = openpyxl.Workbook()
-    sheet = workbook3.active
-    
-    sheet.cell(row=1, column=1, value="File Path")
-    sheet.cell(row=1, column=2, value="RadLex")
-
-    workbook3.save(filename="none.xlsx")
+#create csv files
+    with open('filepath_and_NIDs.csv', 'w') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(["File Path", "NIDs"])
+        
+    with open('filepath_and_Nterms.csv', 'w') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(["File Path", "Nterms"])
+        
+    with open('none.csv', 'w') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(["File Path", "NCIT"])
 
 def toSpreadsheet(f):
-#put filename and RIDs into to Excel spreadsheet
-    #RIDs
-    workbook = load_workbook("filepath_and_RIDs.xlsx")
-    sheet = workbook.active
-    
+#append to csv files
     if f.getRIDs():
-        r = sheet.max_row+1
-        sheet.cell(row=r, column=1, value=f.getName())
-        sheet.cell(row=r, column=2, value=' | '.join(f.getRIDs()))
+        #IDs
+        with open('filepath_and_NIDs.csv','a') as csvfile:
+            writer=csv.writer(csvfile)
+            name = f.getName()
+            items = ' | '.join(f.getRIDs())
+            writer.writerow([name,items])
 
-    workbook.save(filename="filepath_and_RIDs.xlsx")
+        #terms
+        with open('filepath_and_Nterms.csv','a') as csvfile:
+            writer=csv.writer(csvfile)
+            name = f.getName()
+            items = ' | '.join(f.getRterms())
+            writer.writerow([name,items])
 
-    #Rterms
-    workbook2 = load_workbook("filepath_and_Rterms.xlsx")
-    sheet = workbook2.active
-    
-    if f.getRIDs():
-        r = sheet.max_row+1
-        sheet.cell(row=r, column=1, value=f.getName())
-        sheet.cell(row=r, column=2, value=' | '.join(f.getRterms()))
-
-    workbook2.save(filename="filepath_and_Rterms.xlsx")
-    
-    #None
-    workbook3 = load_workbook("none.xlsx")
-    sheet = workbook3.active
-    if not f.getRIDs():
-        r = sheet.max_row+1
-        sheet.cell(row=r, column=1, value=f.getName())
-        sheet.cell(row=r, column=2, value="None")
-    workbook3.save(filename="none.xlsx")
-    
+    else:
+        #track filenames with no IDs/terms
+        with open('none.csv','a') as csvfile:
+            writer=csv.writer(csvfile)
+            name = f.getName()
+            writer.writerow([name,"None"])
     
 def check(filename):
     #check if file has already been annotated
-    workbook = load_workbook("filepath_and_RIDs.xlsx")
-    sheet = workbook.active
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        filepath, radlex = row
-        if filepath == filename:
+    with open('filepath_and_NIDs.csv') as f:
+        if filename in [line.split(',')[0] for line in f]:
             return True
             
-    workbook2 = load_workbook("none.xlsx")
-    sheet2 = workbook2.active
-    for row in sheet2.iter_rows(min_row=2, values_only=True):
-        filepath, x = row
-        if filepath == filename:
+    with open('none.csv') as f:
+        if filename in [line.split(',')[0] for line in f]:
             return True
+        
     return False
 
 class File():
@@ -117,11 +90,11 @@ class File():
         return self.text
     
     def getRIDs(self):
-    #return RIDs list
+    #return IDs list
         return self.RIDs
     
     def getRterms(self):
-    #return Rterms list
+    #return terms list
         return self.Rterms
     
     def openFile(self):
@@ -153,14 +126,13 @@ class File():
             print(self.filename)
             
     def get_json(self, url):
-    #get json from annotator
+    #get term json file
         opener = urllib.request.build_opener()
         opener.addheaders = [('Authorization', 'apikey token=' + API_KEY)]
         return json.loads(opener.open(url).read())
         
     def split_text(self):
     #split text into 500 word pieces for Annotator to handle
-
         if len(self.text) > 1:
             txt = re.findall(r"[\w']+", self.text)
             chunks, chunk_size = len(txt), 490
@@ -171,34 +143,36 @@ class File():
         return [self.text]
         
     def getRadLex(self, annotations, get_class=True):
-    #take annotations and makes list of RadLex IDs and terms
-        #iterate through annotations
+    #take annotations and make list of RadLex IDs and terms
         for result in annotations:
             class_details = result["annotatedClass"]
-            if get_class:
-                while True:
-                    try:
-                        class_details = self.get_json(result["annotatedClass"]["links"]["self"])
-                    except urllib.error.HTTPError:
-                        print(f"Error retrieving {result['annotatedClass']['@id']}")
-                        time.sleep(5)
-                        continue
-                    break
-
-            #get each RIDs + remove duplicates
-            id = class_details["@id"]
-            rid = id[22:]
+            id = result['annotatedClass']['@id']
+            rid = id[51:]
             
-            if rid not in self.RIDs:
-                self.RIDs.append(id[22:])
+            #rdict keeps track of IDs and terms already searched
+            if rid not in rdict.keys():
+                if get_class:
+                    while True:
+                        try:
+                            class_details = self.get_json(result["annotatedClass"]["links"]["self"])
+                        except urllib.error.HTTPError:
+                            print(f"Error retrieving {result['annotatedClass']['@id']}")
+                            time.sleep(5)
+                            continue
+                        break
+                rterm = class_details["prefLabel"]
+                rdict[rid] = rterm
             
-            #get each Rterms + remove duplicates
-            rterm = class_details["prefLabel"]
-
-            if rterm not in self.Rterms:
+            else:
+                rterm = rdict[rid]
+            
+            #add to IDs/terms list if unique
+            if (rid not in self.RIDs) and (rterm not in self.Rterms) :
+                self.RIDs.append(rid)
                 self.Rterms.append(rterm)
             
     def getAnnotations(self, name):
+    #get annotations from NCBO Annotator
         print(name)
         while not self.exit_flag:
             if not self.work_queue.empty():
@@ -211,7 +185,7 @@ class File():
                         self.getRadLex(annotations)
                         print(name,"radlex")
           
-                    except (ConnectionResetError,urllib.error.HTTPError): #try requesting again
+                    except (ConnectionResetError,urllib.error.HTTPError,TimeoutError): #try requesting again
                         print(name,"too many req")
                         time.sleep(10)
                         continue
@@ -221,6 +195,7 @@ class File():
         print(name,"exited")
     
     class MyThread (threading.Thread):
+    #threads to use when getting annotations from NCBO
         def __init__(self, name, file):
             threading.Thread.__init__(self)
             self.name = name

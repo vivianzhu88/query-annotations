@@ -17,3 +17,9 @@ From these spreadsheets (can be found in 'Results' link above), we decided to us
 3. **linkImg.py** is for the LIDC-IDRI collection. This parses through every file in the dataset and scrapes annotation data and DICOM image UID information.
 
 4. **updateTables** is for the CCC2018 and CCC2017 collections. This replaces all the Snomed CT ontology terms in the dataset with RadLex ontology terms wherever possible.
+
+5. **aim templates** contains the templates to create AIM annotations. 
+
+    a. **atb-** are XML format templates and it is built from the ATB platform. It is the basic structure of the template for each collection.
+    
+    b. **epad-** are JSON format templates created from the ATB templates. It is the template compatible with the ePAD platform.

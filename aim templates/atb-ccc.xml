@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TemplateContainer uid="2.25.183837019903484278939949767967223474229" name="CCC" authors="Default Author" version="v1.0" creationDate="2020-08-28" description="Crowds Cure Cancer" xsi:schemaLocation="gme://caCORE.caCORE/3.2/edu.northwestern.radiology.AIMTemplate AIMTemplate_v2rv13.xsd" xmlns="gme://caCORE.caCORE/3.2/edu.northwestern.radiology.AIMTemplate" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <Template uid="2.25.82545824074102134647133879274834013901" name="CCC" authors="Default Author" version="1.0" creationDate="2020-08-28" description="Crowds Cure Cancer" codeMeaning="Crowds Cure Cancer" codeValue="99EPADCCC" codingSchemeDesignator="99EPAD" codingSchemeVersion="">
+      <Component label="Location" itemNumber="0" authors="Default Author" explanatoryText="" minCardinality="1" maxCardinality="1" shouldDisplay="true" groupLabel="" id="2.25.242845184675605226252174279933629920829">
+         <AnatomicEntity annotatorConfidence="false"/>
+         <AllowedTerm codeValue="RID1301" codeMeaning="lung" codingSchemeDesignator="RadLex" codingSchemeVersion="1.0"/>
+         <AllowedTerm codeValue="RID170" codeMeaning="pancreas" codingSchemeDesignator="RadLex" codingSchemeVersion="1.0"/>
+         <AllowedTerm codeValue="RID58" codeMeaning="liver" codingSchemeDesignator="RadLex" codingSchemeVersion="1.0"/>
+      </Component>
+      <Component label="Finding" itemNumber="1" authors="Default Author" explanatoryText="" minCardinality="1" maxCardinality="1" shouldDisplay="true" groupLabel="" id="2.25.219072070311326854053606331340087975213">
+         <ImagingObservation annotatorConfidence="false"/>
+         <AllowedTerm codeValue="RID15654" codeMeaning="benign" codingSchemeDesignator="RadLex" codingSchemeVersion="1.0"/>
+         <AllowedTerm codeValue="RID5171" codeMeaning="necrosis" codingSchemeDesignator="RadLex" codingSchemeVersion="1.0"/>
+      </Component>
+   </Template>
+</TemplateContainer>

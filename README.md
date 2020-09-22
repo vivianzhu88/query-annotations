@@ -1,10 +1,12 @@
-# Facilitating queries in TCIA chest + lung imaging annotations
-
+# query-annotations
 [Chest and Lung Collections data](https://drive.google.com/drive/folders/1sNpTTzbyPEroqUvzfaAT-mivW0gWe1y1?usp=sharing)
 
 [Results](https://docs.google.com/document/d/15B_lSZQDEaRl3EwymEaHmgx4v6LPB3sqyMEEV61m2m4/edit?usp=sharing)
 
-Descriptions
+### Task:
+Facilitate queries in TCIA chest + lung collections through imaging annotations.
+
+### Descriptions:
 
 1. **parseCollections.py** parses the Chest and Lung Collections data files, enters file contents into NCBO Annotator, and produces spreadsheet of filepaths and the ontology ID/terms found in it. 
 

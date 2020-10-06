@@ -35,14 +35,20 @@ function getTemplateAnswers(metadata, annotationName, tempModality) {
     }
 }
 
-function getCharacteristicsData(){
+function getCharacteristicsData(label, labelValues){
+    /*
+    code =
+    systemName = 
+    name = 
+    xmlns = 
+    */
     data = {
         "typeCode": [
             {
                 "code": code,
                 "codeSystemName": systemName,
                 "iso:displayName": {
-                    "value": value,
+                    "value": name,
                     "xmlns:iso": xmlns
                 }
             }
@@ -51,7 +57,7 @@ function getCharacteristicsData(){
             "value": 0
         },
         "label": {
-            "value": "margin"
+            "value": label.toLowerCase()
         }
     }
     return {data};

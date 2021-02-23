@@ -16,9 +16,11 @@ From these spreadsheets (can be found in 'Results' link above), we decided to us
 
 3. **linkImg.py** is for the LIDC-IDRI collection. This parses through every file in the dataset and scrapes annotation data and DICOM image UID information.
 
-4. **updateTables** is for the CCC2018 and CCC2017 collections. This replaces all the Snomed CT ontology terms in the dataset with RadLex ontology terms wherever possible.
+4. **filterByRadlex.py** is for the LIDC-IDRI collection. This filters through the CSV of all LIDC-IDRI annotation data by RadLex ID or term. It also adds Patient ID and Modality info.
 
-5. **aim templates** contains the templates to create AIM annotations. 
+5. **updateTables** is for the CCC2018 and CCC2017 collections. This replaces all the Snomed CT ontology terms in the dataset with RadLex ontology terms wherever possible.
+
+6. **aim templates** contains the templates to create AIM annotations. 
 
     a. **atb-** are XML format templates and it is built from the ATB platform. It is the basic structure of the template for each collection.
     

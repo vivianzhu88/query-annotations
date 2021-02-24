@@ -1,4 +1,6 @@
 const { Aim } = require("aimapi");
+const chars = require("./characteristics.js")
+const localStorage = require("localStorage")
 
 const enumAimType = {
   imageAnnotation: 1,
@@ -13,7 +15,6 @@ function generateUid() {
     }
     return uid;
   }
-console.log(generateUid());
 
 function getTemplateAnswers(metadata, annotationName, tempModality) {
     if (metadata.series) {
@@ -29,27 +30,25 @@ function getTemplateAnswers(metadata, annotationName, tempModality) {
           code: 'LIDC-IDRI',
           codeSystemName: 'LIDC-IDRI',
           'iso:displayName': { 'xmlns:iso': 'uri:iso.org:21090', value: 'LIDC-IDRI' },
-        },
+        }
       ];
       return { comment, modality, name, typeCode };
     }
 }
 
-function getCharacteristicsData(label, labelValues){
-    /*
-    code =
-    systemName = 
-    name = 
-    xmlns = 
-    */
+function getCharacteristicsData(label, labelValue){
+    our_char = label.toLowerCase() + labelValue
+    theData = chars.charDict[our_char]
+    
     data = {
         "typeCode": [
             {
-                "code": code,
-                "codeSystemName": systemName,
+                "code": theData.code,
+                "codeSystemName": theData.codeSystemName,
+                "codeSystemVersion": theData.codeSystemVersion,
                 "iso:displayName": {
-                    "value": name,
-                    "xmlns:iso": xmlns
+                    "value": theData.displayValue,
+                    "xmlns:iso": theData.displayXmlns
                 }
             }
         ],
@@ -60,10 +59,12 @@ function getCharacteristicsData(label, labelValues){
             "value": label.toLowerCase()
         }
     }
-    return {data};
+
+    return data;
 }
 
-export function jsonToAim(jsonObj){
+module.exports = function jsonToAim(jsonObj){
+    console.log("json")
     const seedData = {};
     seedData.aim = {};
     seedData.study = {};
@@ -87,16 +88,17 @@ export function jsonToAim(jsonObj){
     seedData.equipment.softwareVersion = "";
     seedData.person.sex = "";
     seedData.person.name = "";
-    seedData.person.patientId = jsonObj['Patient ID'];
+    seedData.person.patientId = jsonObj['PatientID'];
     seedData.person.birthDate = "";
     
-    const sopClassUid = jsonObj['SOPClassUID'];
-    const sopInstanceUid = jsonObj['SOPInstanceUID'];
+    //const sopClassUid = jsonObj['SOPClassUID']; // there is none
+    //const sopInstanceUid = jsonObj['imageSop_UID'];
 
     if (jsonObj['Nodule/NonNodule'] == 'Nodule'){
 
         var theChars = []
         if (jsonObj['Subtlety'] != ''){
+
             theChars.push(getCharacteristicsData('Subtlety', jsonObj['Subtlety']))
         }
         if (jsonObj['Internal Structure'] != ''){
@@ -152,15 +154,31 @@ export function jsonToAim(jsonObj){
                 }
             ]
         };
-        //seedData.image.push({ sopClassUid, sopInstanceUid });
     }
-    
+    else{
+        seedData.aim.imagingObservationEntityCollection = {
+            "ImagingObservationEntity":
+            [
+                {
+                    "imagingObservationCharacteristicCollection":
+                    {
+                        "ImagingObservationCharacteristic": []
+                    }
+                }
+            ]
+        }
+    }
+
+    //seedData.image.push({ sopClassUid, sopInstanceUid });
+    //seedData.image.push({sopInstanceUid});
     const answers = getTemplateAnswers(seedData, jsonObj['Nodule/NonNodule ID'], '');
     const merged = { ...seedData.aim, ...answers };
     seedData.aim = merged;
     seedData.user = { loginName: 'admin', name: 'admin' }
     
+    console.log(seedData);
     const aim = new Aim(seedData, enumAimType.imageAnnotation);
+    
     /*
     // add the markups
     // points is an array of items { x: parseFloat(x), y: parseFloat(y) }
@@ -168,7 +186,7 @@ export function jsonToAim(jsonObj){
        "TwoDimensionPolyline",
        1,
        points, // points of the roi in first image
-       imageReferenceUid, // first image
+       sopInstanceUid, // first image
        1
      );
     aim.addMarkupEntity(
@@ -180,8 +198,56 @@ export function jsonToAim(jsonObj){
        );
     // add characteristics
     */
-    console.log(JSON.stringify(aim.getAimJSON())); // to get the aim json seedDataect
+    
+    /*
+    var uids = jsonObj['imageSop_UID']
+    console.log(uids.length)
+    var coords = jsonObj['XY Coordinates']
+    console.log(coords.length)
+    for (var i = 0; i < uids.length; i++){
+        console.log("start modifying points");
+
+        points = coords[i].split('|')
+        points = points.map()
+        
+        modPoints = []
+        for (var j = 0; j < points.length; j++){
+            p = points[j]
+            p = p.replace(/'/g,"")
+            p = p.slice(1, -1)
+            p = p.split(',')
+            point = { x: parseFloat(p[0]), y: parseFloat([1]) }
+
+            modPoints.push(point)
+        }
+
+        console.log(modPoints);
+
+        count = i+1
+
+        if (modPoints.length == 1){
+            annotationType = "TwoDimensionPoint"
+        }
+        else{
+            annotationType = "TwoDimensionPolyline"
+        }
+        
+        aim.addMarkupEntity(
+            annotationType,
+            count,
+            modPoints, // points of the roi in first image
+            uids[i], // first image
+            1
+        );
+    }
+
+    */
+    print ('finish')
+    data = JSON.stringify(aim.getAimJSON())
+    return data;
+    //localStorage.setItem("poopjson", data)
+
+    //console.log(JSON.stringify(aim.getAimJSON())); // to get the aim json seedDataect
+    //console.log('endjson');
     
 }
-
-

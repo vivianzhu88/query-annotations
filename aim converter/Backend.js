@@ -92,7 +92,7 @@ module.exports = function jsonToAim(jsonObj){
     seedData.person.birthDate = "";
     
     //const sopClassUid = jsonObj['SOPClassUID']; // there is none
-    //const sopInstanceUid = jsonObj['imageSop_UID'];
+    const sopInstanceUid = jsonObj['imageSop_UID'];
 
     if (jsonObj['Nodule/NonNodule'] == 'Nodule'){
 
@@ -170,7 +170,7 @@ module.exports = function jsonToAim(jsonObj){
     }
 
     //seedData.image.push({ sopClassUid, sopInstanceUid });
-    //seedData.image.push({sopInstanceUid});
+    seedData.image.push({sopInstanceUid});
     const answers = getTemplateAnswers(seedData, jsonObj['Nodule/NonNodule ID'], '');
     const merged = { ...seedData.aim, ...answers };
     seedData.aim = merged;
@@ -178,7 +178,6 @@ module.exports = function jsonToAim(jsonObj){
     
     console.log(seedData);
     const aim = new Aim(seedData, enumAimType.imageAnnotation);
-    
     /*
     // add the markups
     // points is an array of items { x: parseFloat(x), y: parseFloat(y) }
@@ -186,7 +185,7 @@ module.exports = function jsonToAim(jsonObj){
        "TwoDimensionPolyline",
        1,
        points, // points of the roi in first image
-       sopInstanceUid, // first image
+       imageReferenceUid, // first image
        1
      );
     aim.addMarkupEntity(
@@ -199,52 +198,8 @@ module.exports = function jsonToAim(jsonObj){
     // add characteristics
     */
     
-    /*
-    var uids = jsonObj['imageSop_UID']
-    console.log(uids.length)
-    var coords = jsonObj['XY Coordinates']
-    console.log(coords.length)
-    for (var i = 0; i < uids.length; i++){
-        console.log("start modifying points");
-
-        points = coords[i].split('|')
-        points = points.map()
-        
-        modPoints = []
-        for (var j = 0; j < points.length; j++){
-            p = points[j]
-            p = p.replace(/'/g,"")
-            p = p.slice(1, -1)
-            p = p.split(',')
-            point = { x: parseFloat(p[0]), y: parseFloat([1]) }
-
-            modPoints.push(point)
-        }
-
-        console.log(modPoints);
-
-        count = i+1
-
-        if (modPoints.length == 1){
-            annotationType = "TwoDimensionPoint"
-        }
-        else{
-            annotationType = "TwoDimensionPolyline"
-        }
-        
-        aim.addMarkupEntity(
-            annotationType,
-            count,
-            modPoints, // points of the roi in first image
-            uids[i], // first image
-            1
-        );
-    }
-
-    */
-    print ('finish')
     data = JSON.stringify(aim.getAimJSON())
-    return data;
+    return data
     //localStorage.setItem("poopjson", data)
 
     //console.log(JSON.stringify(aim.getAimJSON())); // to get the aim json seedDataect

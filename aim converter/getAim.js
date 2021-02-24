@@ -16,44 +16,8 @@ papa.parse(file, {
     //console.log('Complete', csvData.length, 'records.'); 
     //console.log(csvData);
     //parse the array
-
-    /*
     for (var i = 0; i < csvData.length; i++){
       var jsonObj = csvData[i];
-      console.log(jsonObj);
-      var aimObj = jsonToAim(jsonObj);
-      console.log(aimObj);
-    }
-    */
-    console.log('begin data parsing');
-    var modData = []
-    for (var i = 0; i < csvData.length; i++){
-
-      var entry = csvData[i]
-      var patient = entry['PatientID'];
-      var nod = entry['Nodule/NonNodule ID'];
-
-      node = modData.find(node => node['PatientID'] === patient && node['Nodule/NonNodule ID'] === nod);
-
-      if (node){ // nodule + patient id combo exists
-        index = modData.indexOf(node);
-
-        modData[index]['imageSop_UID'].push(entry['imageSop_UID'])
-        modData[index]['XY Coordinates'].push(entry['XY Coordinates'])
-      }
-      else {
-        entry['imageSop_UID'] = [entry['imageSop_UID']]
-        entry['XY Coordinates'] = [entry['XY Coordinates']]
-        modData.push(entry)
-      }
-
-      console.log(modData.length);
-    }
-
-    console.log('begin creating JSON');
-    for (var j = 0; j < modData.length; j++){
-      console.log(j);
-      var jsonObj = modData[j];
       console.log(jsonObj);
       var aimObj = jsonToAim(jsonObj);
       console.log(aimObj);

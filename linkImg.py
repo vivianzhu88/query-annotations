@@ -6,14 +6,73 @@ import json
 import csv
 
 filedata =  {}
+#link = 'https://www.cancerimagingarchive.net/viewer/?study=' + study + '&series=' + series #useful?
+def createSpreadsheet():
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.cell(row=1, column=1, value="RadLex Term")
+    sheet.cell(row=1, column=2, value="RadLex ID")
+    sheet.cell(row=1, column=3, value="Nodule/NonNodule")
+    sheet.cell(row=1, column=4, value="Nodule/NonNodule ID")
+    sheet.cell(row=1, column=5, value="Subtlety")
+    sheet.cell(row=1, column=6, value="Internal Structure")
+    sheet.cell(row=1, column=7, value="Calcification")
+    sheet.cell(row=1, column=8, value="Sphericity")
+    sheet.cell(row=1, column=9, value="Margin")
+    sheet.cell(row=1, column=10, value="Lobulation")
+    sheet.cell(row=1, column=11, value="Spiculation")
+    sheet.cell(row=1, column=12, value="Texture")
+    sheet.cell(row=1, column=13, value="Malignancy")
+    sheet.cell(row=1, column=14, value="Confidence")
+    sheet.cell(row=1, column=15, value="Obscuration")
+    sheet.cell(row=1, column=16, value="Reason")
+    sheet.cell(row=1, column=17, value="Image Z Postion")
+    sheet.cell(row=1, column=18, value="LIDC ReadMessage UID")
+    sheet.cell(row=1, column=19, value="IDRI ReadMessage UID")
+    sheet.cell(row=1, column=20, value="SeriesInstanceUID")
+    sheet.cell(row=1, column=21, value="StudyInstanceUID")
+    sheet.cell(row=1, column=22, value="imageSop_UID")
+    sheet.cell(row=1, column=23, value="XY Coordinates")
+    workbook.save(filename="LIDC-IDRI.xlsx")
+    
+def toSpreadsheet(data, rterm, rid):
+    workbook = load_workbook("LIDC-IDRI.xlsx")
+    sheet = workbook.active
+    
+    for d in data:
+        r = sheet.max_row+1
+        sheet.cell(row=r, column=1, value=d[0])
+        sheet.cell(row=r, column=2, value=d[1])
+        sheet.cell(row=r, column=3, value=d[2])
+        sheet.cell(row=r, column=4, value=d[3])
+        sheet.cell(row=r, column=5, value=d[4])
+        sheet.cell(row=r, column=6, value=d[5])
+        sheet.cell(row=r, column=7, value=d[6])
+        sheet.cell(row=r, column=8, value=d[7])
+        sheet.cell(row=r, column=9, value=d[8])
+        sheet.cell(row=r, column=10, value=d[9])
+        sheet.cell(row=r, column=11, value=d[10])
+        sheet.cell(row=r, column=12, value=d[11])
+        sheet.cell(row=r, column=13, value=d[12])
+        sheet.cell(row=r, column=14, value=d[13])
+        sheet.cell(row=r, column=15, value=d[14])
+        sheet.cell(row=r, column=16, value=d[15])
+        sheet.cell(row=r, column=17, value=d[16])
+        sheet.cell(row=r, column=18, value=d[17])
+        sheet.cell(row=r, column=19, value=d[18])
+        sheet.cell(row=r, column=20, value=d[19])
+        sheet.cell(row=r, column=21, value=d[20])
+        sheet.cell(row=r, column=22, value=d[21])
+        sheet.cell(row=r, column=23, value=d[22])
+    
+    workbook.save(filename="LIDC-IDRI.xlsx")
     
 def toJson(data):
-#LIDC-IDRI data to json format
     output = []
     for d in data:
         x = {}
-        x["NCIT Term"] = d[0]
-        x["NCIT ID"] = d[1]
+        x["RadLex Term"] = d[0]
+        x["RadLex ID"] = d[1]
         x["Nodule/NonNodule"] = d[2]
         x["Nodule/NonNodule ID"] = d[3]
         x["Subtlety"] = d[4]
@@ -41,8 +100,7 @@ def toJson(data):
         json.dump(output, outfile)
 
 def toCSV(data):
-#LIDC-IDRI data to csv format
-    fields = ["NCIT Term", "NCIT ID", "Nodule/NonNodule", "Nodule/NonNodule ID", "Subtlety", "Internal Structure", "Calcification", "Sphericity", "Margin", "Lobulation", "Spiculation", "Texture", "Malignancy", "Confidence", "Obscuration", "Reason", "Image Z Postion", "LIDC ReadMessage UID", "IDRI ReadMessage UID", "SeriesInstanceUID", "StudyInstanceUID", "imageSop_UID", "XY Coordinates"]
+    fields = ["RadLex Term", "RadLex ID", "Nodule/NonNodule", "Nodule/NonNodule ID", "Subtlety", "Internal Structure", "Calcification", "Sphericity", "Margin", "Lobulation", "Spiculation", "Texture", "Malignancy", "Confidence", "Obscuration", "Reason", "Image Z Postion", "LIDC ReadMessage UID", "IDRI ReadMessage UID", "SeriesInstanceUID", "StudyInstanceUID", "imageSop_UID", "XY Coordinates"]
     rows = data
     filename = "LIDC-IDRI.csv"
     
@@ -52,7 +110,6 @@ def toCSV(data):
         csvwriter.writerows(rows)
 
 def checkTag(tag, v=None):
-#check tag for values
     if tag:
         if v is None:
             return tag[0].firstChild.nodeValue
@@ -63,7 +120,6 @@ def checkTag(tag, v=None):
 
 
 def getData(f):
-#parse LIDC-IDRI radiologist annotation files
     data = []
     try:
         filepath = "Chest_and_Lung_Collections/" + f
@@ -81,11 +137,11 @@ def getData(f):
         series_uid = checkTag(xml_data.getElementsByTagName('SeriesInstanceUID'))
     study_uid = xml_data.getElementsByTagName('StudyInstanceUID')[0].firstChild.nodeValue
     
-    #parse for Nodules
     nodes = xml_data.getElementsByTagName('unblindedReadNodule')
     nodes += xml_data.getElementsByTagName('unblindedRead')
     for n in nodes:
         ID = checkTag(n.getElementsByTagName('noduleID'))
+        print(ID)
         subtlety = checkTag(n.getElementsByTagName('subtlety'))
         internalStructure = checkTag(n.getElementsByTagName('internalStructure'))
         calcification = checkTag(n.getElementsByTagName('calcification'))
@@ -102,7 +158,8 @@ def getData(f):
         
         for r in rois:
             z_pos = checkTag(r.getElementsByTagName('imageZposition'))
-            sop_UID = n.getElementsByTagName('imageSOP_UID')[0].firstChild.nodeValue
+            sop_UID = r.getElementsByTagName('imageSOP_UID')[0].firstChild.nodeValue
+            print(sop_UID)
             x_coord = r.getElementsByTagName('xCoord')
             y_coord = r.getElementsByTagName('yCoord')
             
@@ -115,7 +172,6 @@ def getData(f):
             d = ["Nodule", ID, subtlety, internalStructure, calcification, sphericity, margin, lobulation, spiculation, texture, malignancy, confidence, obscuration, reason, z_pos, lidc_uid, idri_uid, series_uid, study_uid, sop_UID, xys]
             data.append(d)
         
-    #parse for NonNodules
     nodes = xml_data.getElementsByTagName('nonNodule')
     for n in nodes:
         ID = n.getElementsByTagName('nonNoduleID')[0].firstChild.nodeValue
@@ -138,15 +194,15 @@ def getData(f):
     return data
 
 def getUIDs():
-#summarize LIDC-IDRI files
+#Collect all unique imageSOP_UIDs for each RadLex ID/term in LIDC-IDRI
     parser = etree.XMLParser(encoding='UTF-8')
     total_data = []
 
     with open('freq.json') as json_file:
         json_data = json.load(json_file)
         for row in json_data:
-            rid = row["NIDs"]
-            rterm = row["Nterms"]
+            rid = row["RIDs"]
+            rterm = row["Rterms"]
             count = row["Count"]
             filepaths = row["File Paths"]
             files = filepaths.split(" | ")
@@ -166,11 +222,18 @@ def getUIDs():
                     print(count,"/",len(files) )
             
             if r_data:
+                '''
+                print("to spreadsheet")
+                toSpreadsheet(data)
+                print("done spreadsheet")
+                '''
                 total_data += r_data
             print(rterm)
     
     toJson(total_data)
     toCSV(total_data)
 
+#Put data into Excel spreadsheet
+createSpreadsheet()
 
 getUIDs()

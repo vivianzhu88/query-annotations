@@ -92,7 +92,7 @@ module.exports = function jsonToAim(jsonObj){
     seedData.person.birthDate = "";
     
     //const sopClassUid = jsonObj['SOPClassUID']; // there is none
-    const sopInstanceUid = jsonObj['imageSop_UID'];
+    const sopInstanceUid = jsonObj['imageSop_UID'][0];
 
     if (jsonObj['Nodule/NonNodule'] == 'Nodule'){
 
@@ -170,14 +170,16 @@ module.exports = function jsonToAim(jsonObj){
     }
 
     //seedData.image.push({ sopClassUid, sopInstanceUid });
-    seedData.image.push({sopInstanceUid});
+    seedData.image.push({ sopInstanceUid });
     const answers = getTemplateAnswers(seedData, jsonObj['Nodule/NonNodule ID'], '');
     const merged = { ...seedData.aim, ...answers };
     seedData.aim = merged;
     seedData.user = { loginName: 'admin', name: 'admin' }
     
     console.log(seedData);
-    const aim = new Aim(seedData, enumAimType.imageAnnotation);
+    aim = new Aim(seedData, enumAimType.imageAnnotation)
+
+    //EXAMPLE CREATE MARKUP
     /*
     // add the markups
     // points is an array of items { x: parseFloat(x), y: parseFloat(y) }
@@ -197,6 +199,44 @@ module.exports = function jsonToAim(jsonObj){
        );
     // add characteristics
     */
+    
+    var uids = jsonObj['imageSop_UID']
+    var coords = jsonObj['XY Coordinates']
+
+    // create markup entities
+    for (var i = 0; i < uids.length; i++){
+
+        // fix formatting 
+        console.log("start modifying points");
+        points = coords[i].split('|')
+        // create the markup points
+        modPoints = []
+        for (var j = 0; j < points.length; j++){
+            p = points[j]
+            p = p.replace(/'/g,"")
+            p = p.replace(/\s+/,"")
+            p = p.slice(1, -1)
+            p = p.split(',')
+            point = { x: parseFloat(p[0]), y: parseFloat(p[1]) }
+            modPoints.push(point)
+        }
+        count = i+1
+        if (modPoints.length == 1){
+            annotationType = "TwoDimensionPoint"
+        }
+        else{
+            annotationType = "TwoDimensionPolyline"
+        }
+        
+        aim.addMarkupEntity(
+            annotationType,
+            1,
+            modPoints, // points of the roi in first image
+            uids[i], // first image
+            count
+        );
+    }
+    
     
     data = JSON.stringify(aim.getAimJSON())
     return data

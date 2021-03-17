@@ -39,7 +39,18 @@ function getTemplateAnswers(metadata, annotationName, tempModality) {
 function getCharacteristicsData(label, labelValue){
     our_char = label.toLowerCase() + labelValue
     theData = chars.charDict[our_char]
-    
+
+    if(!theData) {
+        theData = {
+            "code": "out of range",
+            "codeSystemName": "LIDC-IDRI",
+            "codeSystemVersion": "",
+            "displayValue": "out of range",
+            "displayXmlns": "uri:iso.org:21090",
+            "labelValue": label.toLowerCase()
+        }
+    }  
+
     data = {
         "typeCode": [
             {
@@ -91,7 +102,7 @@ module.exports = function jsonToAim(jsonObj){
     seedData.person.patientId = jsonObj['PatientID'];
     seedData.person.birthDate = "";
     
-    //const sopClassUid = jsonObj['SOPClassUID']; // there is none
+    const sopClassUid = "1.2.840.10008.5.1.4.1.1.2";
     const sopInstanceUid = jsonObj['imageSop_UID'][0];
 
     if (jsonObj['Nodule/NonNodule'] == 'Nodule'){
@@ -169,8 +180,7 @@ module.exports = function jsonToAim(jsonObj){
         }
     }
 
-    //seedData.image.push({ sopClassUid, sopInstanceUid });
-    seedData.image.push({ sopInstanceUid });
+    seedData.image.push({ sopClassUid, sopInstanceUid });
     const answers = getTemplateAnswers(seedData, jsonObj['Nodule/NonNodule ID'], '');
     const merged = { ...seedData.aim, ...answers };
     seedData.aim = merged;
@@ -204,10 +214,10 @@ module.exports = function jsonToAim(jsonObj){
     var coords = jsonObj['XY Coordinates']
 
     // create markup entities
+    console.log("start making markups");
     for (var i = 0; i < uids.length; i++){
 
         // fix formatting 
-        console.log("start modifying points");
         points = coords[i].split('|')
         // create the markup points
         modPoints = []
@@ -236,7 +246,7 @@ module.exports = function jsonToAim(jsonObj){
             count
         );
     }
-    
+    console.log("finish making markups");
     
     data = JSON.stringify(aim.getAimJSON())
     return data

@@ -31,6 +31,6 @@ From these spreadsheets (can be found in 'Results' link above), we decided to us
 
 6. **aim templates** contains the templates to create AIM annotations. 
 
-    a. **atb-** are XML format templates and it is built from the ATB platform. It is the basic structure of the template for each collection.
+    a. **atb-** are XML format templates and it is built from the ATB platform. It is the basic structure of the template for each collection. [xml to json](https://github.com/RubinLab/aimconvert)
     
     b. **epad-** are JSON format templates created from the ATB templates. It is the template compatible with the ePAD platform.

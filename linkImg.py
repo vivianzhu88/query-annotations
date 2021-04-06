@@ -1,106 +1,16 @@
 from xml.dom import minidom
 import openpyxl
 from openpyxl import load_workbook
+import os
 from lxml import etree
 import json
 import csv
 
 filedata =  {}
 #link = 'https://www.cancerimagingarchive.net/viewer/?study=' + study + '&series=' + series #useful?
-def createSpreadsheet():
-    workbook = openpyxl.Workbook()
-    sheet = workbook.active
-    sheet.cell(row=1, column=1, value="RadLex Term")
-    sheet.cell(row=1, column=2, value="RadLex ID")
-    sheet.cell(row=1, column=3, value="Nodule/NonNodule")
-    sheet.cell(row=1, column=4, value="Nodule/NonNodule ID")
-    sheet.cell(row=1, column=5, value="Subtlety")
-    sheet.cell(row=1, column=6, value="Internal Structure")
-    sheet.cell(row=1, column=7, value="Calcification")
-    sheet.cell(row=1, column=8, value="Sphericity")
-    sheet.cell(row=1, column=9, value="Margin")
-    sheet.cell(row=1, column=10, value="Lobulation")
-    sheet.cell(row=1, column=11, value="Spiculation")
-    sheet.cell(row=1, column=12, value="Texture")
-    sheet.cell(row=1, column=13, value="Malignancy")
-    sheet.cell(row=1, column=14, value="Confidence")
-    sheet.cell(row=1, column=15, value="Obscuration")
-    sheet.cell(row=1, column=16, value="Reason")
-    sheet.cell(row=1, column=17, value="Image Z Postion")
-    sheet.cell(row=1, column=18, value="LIDC ReadMessage UID")
-    sheet.cell(row=1, column=19, value="IDRI ReadMessage UID")
-    sheet.cell(row=1, column=20, value="SeriesInstanceUID")
-    sheet.cell(row=1, column=21, value="StudyInstanceUID")
-    sheet.cell(row=1, column=22, value="imageSop_UID")
-    sheet.cell(row=1, column=23, value="XY Coordinates")
-    workbook.save(filename="LIDC-IDRI.xlsx")
-    
-def toSpreadsheet(data, rterm, rid):
-    workbook = load_workbook("LIDC-IDRI.xlsx")
-    sheet = workbook.active
-    
-    for d in data:
-        r = sheet.max_row+1
-        sheet.cell(row=r, column=1, value=d[0])
-        sheet.cell(row=r, column=2, value=d[1])
-        sheet.cell(row=r, column=3, value=d[2])
-        sheet.cell(row=r, column=4, value=d[3])
-        sheet.cell(row=r, column=5, value=d[4])
-        sheet.cell(row=r, column=6, value=d[5])
-        sheet.cell(row=r, column=7, value=d[6])
-        sheet.cell(row=r, column=8, value=d[7])
-        sheet.cell(row=r, column=9, value=d[8])
-        sheet.cell(row=r, column=10, value=d[9])
-        sheet.cell(row=r, column=11, value=d[10])
-        sheet.cell(row=r, column=12, value=d[11])
-        sheet.cell(row=r, column=13, value=d[12])
-        sheet.cell(row=r, column=14, value=d[13])
-        sheet.cell(row=r, column=15, value=d[14])
-        sheet.cell(row=r, column=16, value=d[15])
-        sheet.cell(row=r, column=17, value=d[16])
-        sheet.cell(row=r, column=18, value=d[17])
-        sheet.cell(row=r, column=19, value=d[18])
-        sheet.cell(row=r, column=20, value=d[19])
-        sheet.cell(row=r, column=21, value=d[20])
-        sheet.cell(row=r, column=22, value=d[21])
-        sheet.cell(row=r, column=23, value=d[22])
-    
-    workbook.save(filename="LIDC-IDRI.xlsx")
-    
-def toJson(data):
-    output = []
-    for d in data:
-        x = {}
-        x["RadLex Term"] = d[0]
-        x["RadLex ID"] = d[1]
-        x["Nodule/NonNodule"] = d[2]
-        x["Nodule/NonNodule ID"] = d[3]
-        x["Subtlety"] = d[4]
-        x["Internal Structure"] = d[5]
-        x["Calcification"] = d[6]
-        x["Sphericity"] = d[7]
-        x["Margin"] = d[8]
-        x["Lobulation"] = d[9]
-        x["Spiculation"] = d[10]
-        x["Texture"] = d[11]
-        x["Malignancy"] = d[12]
-        x["Confidence"] = d[13]
-        x["Obscuration"] = d[14]
-        x["Reason"] = d[15]
-        x["Image Z Postion"] = d[16]
-        x["LIDC ReadMessage UID"] = d[17]
-        x["IDRI ReadMessage UID"] = d[18]
-        x["SeriesInstanceUID"] = d[19]
-        x["StudyInstanceUID"] = d[20]
-        x["imageSop_UID"] = d[21]
-        x["XY Coordinates"] = d[22]
-        output.append(x)
-        
-    with open("LIDC-IDRI.json", "w") as outfile:
-        json.dump(output, outfile)
 
 def toCSV(data):
-    fields = ["RadLex Term", "RadLex ID", "Nodule/NonNodule", "Nodule/NonNodule ID", "Subtlety", "Internal Structure", "Calcification", "Sphericity", "Margin", "Lobulation", "Spiculation", "Texture", "Malignancy", "Confidence", "Obscuration", "Reason", "Image Z Postion", "LIDC ReadMessage UID", "IDRI ReadMessage UID", "SeriesInstanceUID", "StudyInstanceUID", "imageSop_UID", "XY Coordinates"]
+    fields = ["Nodule/NonNodule", "Nodule/NonNodule ID", "Subtlety", "Internal Structure", "Calcification", "Sphericity", "Margin", "Lobulation", "Spiculation", "Texture", "Malignancy", "Confidence", "Obscuration", "Reason", "Image Z Postion", "LIDC ReadMessage UID", "IDRI ReadMessage UID", "SeriesInstanceUID", "StudyInstanceUID", "imageSop_UID", "XY Coordinates"]
     rows = data
     filename = "LIDC-IDRI.csv"
     
@@ -122,12 +32,11 @@ def checkTag(tag, v=None):
 def getData(f):
     data = []
     try:
-        filepath = "Chest_and_Lung_Collections/" + f
-        xml_data = minidom.parse("Chest_and_Lung_Collections/" + f)
+        xml_data = minidom.parse(f)
         print(f)
         
     except (FileNotFoundError, OSError):
-        print(filepath)
+        print(f)
         return
     
     lidc_uid = checkTag(xml_data.getElementsByTagName('LidcReadMessage'),"v")
@@ -194,46 +103,30 @@ def getData(f):
     return data
 
 def getUIDs():
-#Collect all unique imageSOP_UIDs for each RadLex ID/term in LIDC-IDRI
-    parser = etree.XMLParser(encoding='UTF-8')
-    total_data = []
-
-    with open('freq.json') as json_file:
-        json_data = json.load(json_file)
-        for row in json_data:
-            rid = row["RIDs"]
-            rterm = row["Rterms"]
-            count = row["Count"]
-            filepaths = row["File Paths"]
-            files = filepaths.split(" | ")
-            
-            r_data = []
-            count =  0
-            for f in files:
-                if f[:70] == "LIDC-IDRI/LIDC-IDRI_RadiologistAnnotationsSegmentations/tcia-lidc-xml/":
-                    if f not in filedata.keys():
-                        new_data = [ ([rterm, rid] + x) for x in getData(f)]
-                        r_data += new_data
-                    else:
-                        print("already exists")
-                        new_data = [ ([rterm, rid] + x) for x in filedata[f]]
-                        r_data += new_data
-                    count+=1
-                    print(count,"/",len(files) )
-            
-            if r_data:
-                '''
-                print("to spreadsheet")
-                toSpreadsheet(data)
-                print("done spreadsheet")
-                '''
-                total_data += r_data
-            print(rterm)
+#Collect all unique imageSOP_UIDs in LIDC-IDRI
     
-    toJson(total_data)
-    toCSV(total_data)
+    files = []
+    dir_path = "/Users/vivianzhu/Documents/Annotator/Chest_and_Lung_Collections/LIDC-IDRI/LIDC-IDRI_RadiologistAnnotationsSegmentations/tcia-lidc-xml/"
+    for dp,_,filenames in os.walk(dir_path):
+       for f in filenames:
+           if f != ".DS_Store":
+               f = os.path.abspath(os.path.join(dp, f))
+               files.append(f)
+               print(f)
 
-#Put data into Excel spreadsheet
-createSpreadsheet()
+    final_data = []
+    count = 0
+    for f in files:
+        if f not in filedata.keys():
+            new_data = getData(f)
+            final_data += new_data
+        else:
+            print("already exists")
+            new_data = filedata[f]
+            final_data += new_data
+        count+=1
+        print(count,"/",len(files) )
+    
+    toCSV(final_data)
 
 getUIDs()

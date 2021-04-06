@@ -25,7 +25,7 @@ From these spreadsheets (can be found in 'Results' link above), we decided to us
 
 3. **linkImg.py** is for the LIDC-IDRI collection. This parses through every file in the dataset and scrapes annotation data and DICOM image UID information.
 
-4. **filterByRadlex.py** is for the LIDC-IDRI collection. This filters through the CSV of all LIDC-IDRI annotation data by RadLex ID or term. It also adds Patient ID and Modality info.
+4. **addExtraValues.py** is for the LIDC-IDRI collection. It adds Patient ID and Modality info.
 
 5. **updateTables** is for the CCC2018 and CCC2017 collections. This replaces all the Snomed CT ontology terms in the dataset with RadLex ontology terms wherever possible.
 

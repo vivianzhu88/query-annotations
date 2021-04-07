@@ -1,6 +1,6 @@
 const fs = require('fs');
 const papa = require('papaparse');
-const file = fs.createReadStream("new_LIDC-IDRI.csv");
+const file = fs.createReadStream("data_to_AIM.csv");
 const jsonToAim = require('./Backend.js')
 const localStorage = require("localStorage")
 
@@ -14,41 +14,52 @@ papa.parse(file, {
   },
   complete: function(results, file) {
 
-    // organize the CSV data so each modData entry is a nodule and all of its markup info
-    console.log('begin organizing data')
-    var modData = []
+    var scan_data = {}
     for (var i = 0; i < csvData.length; i++){
-
       var entry = csvData[i]
-      var patient = entry['PatientID'];
-      var nod = entry['Nodule/NonNodule ID'];
+      var scan_id = entry['ScanID'];
 
-      node = modData.find(node => node['PatientID'] === patient && node['Nodule/NonNodule ID'] === nod);
-
-      if (node){ // if nodule + patient ID combo exists, add on to the combo
-        index = modData.indexOf(node);
-
-        modData[index]['imageSop_UID'].push(entry['imageSop_UID'])
-        modData[index]['XY Coordinates'].push(entry['XY Coordinates'])
+      if (scan_data[scan_id]){
+        scan_data[scan_id].push(entry)
       }
-      else { // create the nodule + patient ID combo
-        entry['imageSop_UID'] = [entry['imageSop_UID']]
-        entry['XY Coordinates'] = [entry['XY Coordinates']]
-        modData.push(entry)
+      else{
+        scan_data[scan_id] = [entry]
       }
-
-      console.log(modData.length); // finish organizing data
     }
 
-    // create aim annotations from the data
-    console.log('begin creating JSON');
-    for (var j = 0; j < modData.length; j++){
-      console.log(j);
-      var jsonObj = modData[j];
-      console.log(jsonObj);
-      var aimObj = jsonToAim(jsonObj);
-      console.log(aimObj);
+    for (let [key, value] of Object.entries(scan_data)){
+      // create directory for each scan
+      dir = "./LIDC_AIMS/Scan_" + key
+      fs.mkdir(dir, { recursive: true }, (err) => {
+        if (err) {
+            throw err;
+        }
+        console.log(dir, "directory is created.");
+      })
+
+      // create an AIM file for each nodule inside the directory
+      for (var j = 0; j < value.length; j++){
+        console.log(j);
+        var jsonObj = value[j];
+        console.log(jsonObj);
+        var aimObj = jsonToAim(jsonObj);
+        console.log(aimObj);
+
+        path = dir + "/" + jsonObj['Nodule/NonNodule ID'] + ".json"
+        console.log(path)
+        const final_data = JSON.stringify(aimObj);
+
+        fs.writeFile(path, data, (err) => {
+          if (err) {
+              throw err;
+          }
+          console.log("JSON data is saved.");
+        });
+
+      }
+
     }
+
   }
 });
 

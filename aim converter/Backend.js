@@ -102,8 +102,22 @@ module.exports = function jsonToAim(jsonObj){
     seedData.person.patientId = jsonObj['PatientID'];
     seedData.person.birthDate = "";
     
-    const sopClassUid = "1.2.840.10008.5.1.4.1.1.2";
-    const sopInstanceUid = jsonObj['imageSop_UID'][0];
+    if (jsonObj['Modality'] == 'DX'){
+        //CHANGE THIS!!!!!
+        //
+        //
+        //
+        sopClassUid = "1.2.840.10008.5.1.4.1.1.1.1";
+    }
+    else if (jsonObj['Modality'] == 'CR'){
+        sopClassUid = "1.2.840.10008.5.1.4.1.1.1";
+    }
+    else { // (jsonObj['Modality'] == 'CT')
+        sopClassUid = "1.2.840.10008.5.1.4.1.1.2";
+    }
+
+    var uids = jsonObj['imageSop_UID'].split('*')
+    const sopInstanceUid = uids[0];
 
     if (jsonObj['Nodule/NonNodule'] == 'Nodule'){
 
@@ -179,7 +193,6 @@ module.exports = function jsonToAim(jsonObj){
             ]
         }
     }
-
     seedData.image.push({ sopClassUid, sopInstanceUid });
     const answers = getTemplateAnswers(seedData, jsonObj['Nodule/NonNodule ID'], '');
     const merged = { ...seedData.aim, ...answers };
@@ -210,8 +223,8 @@ module.exports = function jsonToAim(jsonObj){
     // add characteristics
     */
     
-    var uids = jsonObj['imageSop_UID']
-    var coords = jsonObj['XY Coordinates']
+    var uids = jsonObj['imageSop_UID'].split('*')
+    var coords = jsonObj['XY Coordinates'].split('*')
 
     // create markup entities
     console.log("start making markups");

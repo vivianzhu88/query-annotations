@@ -103,10 +103,6 @@ module.exports = function jsonToAim(jsonObj){
     seedData.person.birthDate = "";
     
     if (jsonObj['Modality'] == 'DX'){
-        //CHANGE THIS!!!!!
-        //
-        //
-        //
         sopClassUid = "1.2.840.10008.5.1.4.1.1.1.1";
     }
     else if (jsonObj['Modality'] == 'CR'){

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const papa = require('papaparse');
-const file = fs.createReadStream("data_to_AIM.csv");
-const jsonToAim = require('./Backend.js')
+const file = fs.createReadStream("LIDC_data_to_AIM.csv");
+const jsonToAim = require('./LIDC.js')
 const localStorage = require("localStorage")
 
 //CSV to JSON, get entries in table

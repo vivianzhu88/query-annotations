@@ -9,6 +9,7 @@ const enumAimType = {
 };
 
 function generateUid() {
+//generate random UIDs
     let uid = "2.25." + Math.floor(1 + Math.random() * 9);
     for (let index = 0; index < 38; index++) {
       uid = uid + Math.floor(Math.random() * 10);
@@ -17,6 +18,7 @@ function generateUid() {
   }
 
 function getTemplateAnswers(metadata, annotationName, tempModality) {
+// get the LIDC template answers for AIM
     if (metadata.series) {
       const { number, description, instanceNumber } = metadata.series;
       const seriesModality = metadata.series.modality;
@@ -37,6 +39,7 @@ function getTemplateAnswers(metadata, annotationName, tempModality) {
 }
 
 function getCharacteristicsData(label, labelValue){
+// get a characteristic in the LIDC template 
     our_char = label.toLowerCase() + labelValue
     theData = chars.charDict[our_char]
 
@@ -76,6 +79,7 @@ function getCharacteristicsData(label, labelValue){
 
 
 function removeEmpty(aim_json){
+// remove the parents that have children with empty []
     aim_json = JSON.parse(aim_json)
 
     delete aim_json.ImageAnnotationCollection.imageAnnotations.ImageAnnotation[0].calculationEntityCollection
@@ -97,6 +101,7 @@ module.exports = function jsonToAim(jsonObj){
     seedData.person = {};
     seedData.image = [];
 
+    // generate seed data basics
     seedData.aim.studyInstanceUid = jsonObj['StudyInstanceUID'];
     seedData.study.startTime = "";
     seedData.study.instanceUid = jsonObj['StudyInstanceUID'];
@@ -128,6 +133,7 @@ module.exports = function jsonToAim(jsonObj){
     var uids = jsonObj['imageSop_UID'].split('*')
     const sopInstanceUid = uids[0];
 
+    // generate LIDC template characteristics
     if (jsonObj['Nodule/NonNodule'] == 'Nodule'){
 
         var theChars = []
@@ -160,7 +166,6 @@ module.exports = function jsonToAim(jsonObj){
             theChars.push(getCharacteristicsData('Malignancy', jsonObj['Malignancy']))
         }
 
-
         seedData.aim.imagingObservationEntityCollection = {
             "ImagingObservationEntity": [
                 {
@@ -191,6 +196,7 @@ module.exports = function jsonToAim(jsonObj){
         };
     }
 
+    // use seed data to create AIM
     seedData.image.push({ sopClassUid, sopInstanceUid });
     const answers = getTemplateAnswers(seedData, jsonObj['Nodule/NonNodule ID'], '');
     const merged = { ...seedData.aim, ...answers };
@@ -199,27 +205,6 @@ module.exports = function jsonToAim(jsonObj){
     
     console.log(JSON.stringify(seedData));
     aim = new Aim(seedData, enumAimType.imageAnnotation)
-
-    //EXAMPLE CREATE MARKUP
-    /*
-    // add the markups
-    // points is an array of items { x: parseFloat(x), y: parseFloat(y) }
-    aim.addMarkupEntity(
-       "TwoDimensionPolyline",
-       1,
-       points, // points of the roi in first image
-       imageReferenceUid, // first image
-       1
-     );
-    aim.addMarkupEntity(
-         "TwoDimensionPolyline",
-         2,
-         points, // points of the roi in 2nd image
-         imageReferenceUid, // 2nd image imge sop instance uid
-         1
-       );
-    // add characteristics
-    */
     
     var uids = jsonObj['imageSop_UID'].split('*')
     var coords = jsonObj['XY Coordinates'].split('*')
@@ -258,7 +243,6 @@ module.exports = function jsonToAim(jsonObj){
         );
     }
     console.log("finish making markups");
-    //console.log(JSON.stringify(aim.getAimJSON()))
     aim_json = JSON.stringify(aim.getAimJSON())
     data = JSON.stringify(removeEmpty(aim_json))
 

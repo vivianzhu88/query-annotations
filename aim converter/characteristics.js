@@ -1,5 +1,7 @@
 var c = {};
 
+// LIDC Characteristcs
+
 c["subtlety1"] = {
     "code": "extremely subtle",
     "codeSystemName": "LIDC-IDRI",
@@ -368,5 +370,50 @@ c["malignancy5"] = {
     "displayXmlns": "uri:iso.org:21090",
     "labelValue": "malignancy"
 }
+
+
+// CCC characteristics
+
+c["lung"] = {"code":"RID1301","displayValue":"lung","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["liver"] = {"code":"RID58","displayValue":"liver","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["renal"] = {"code":"renal","displayValue":"renal","codeSystemName":"CCC","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["ovarian"] = {"code":"ovarian","displayValue":"ovarian","codeSystemName":"CCC","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["adrenal structure"] = {"code":"23451007","displayValue":"adrenal structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["brain structure"] = {"code":"12738006","displayValue":"brain structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["chest and/or abdomen structure"] = {"code":"416550000","displayValue":"chest and/or abdomen structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["colon structure"] = {"code":"71854001","displayValue":"colon structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["gallbladder structure"] = {"code":"28231008","displayValue":"gallbladder structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["kidney structure"] = {"code":"64033007","displayValue":"kidney structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["liver structure"] = {"code":"10200004","displayValue":"liver structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["lung structure"] = {"code":"39607008","displayValue":"lung structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["mediastinal structure"] = {"code":"72410000","displayValue":"mediastinal structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["neck structure"] = {"code":"45048000","displayValue":"neck structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["ovarian structure"] = {"code":"15497006","displayValue":"ovarian structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["pancreatic structure"] = {"code":"15776009","displayValue":"pancreatic structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["pelvis and/or lower extremity structure"] = {"code":"416631005","displayValue":"pelvis and/or lower extremity structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["peritoneum (serous membrane) structure"] = {"code":"15425007","displayValue":"peritoneum (serous membrane) structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["retroperitoneal compartment structure"] = {"code":"82849001","displayValue":"retroperitoneal compartment structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["skeletal and/or smooth muscle structure"] = {"code":"71616004","displayValue":"skeletal and/or smooth muscle structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["small intestinal structure"] = {"code":"30315005","displayValue":"small intestinal structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["splenic structure"] = {"code":"78961009","displayValue":"splenic structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["stomach structure"] = {"code":"69695003","displayValue":"stomach structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["subcutaneous tissue structure"] = {"code":"71966008","displayValue":"subcutaneous tissue structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["urinary bladder structure"] = {"code":"89837001","displayValue":"urinary bladder structure","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["bone organ"] = {"code":"RID13197","displayValue":"bone organ","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["breast"] = {"code":"RID28749","displayValue":"breast","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["lymph node"] = {"code":"RID13296","displayValue":"lymph node","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["portion of soft tissue"] = {"code":"RID5171","displayValue":"portion of soft tissue","codeSystemName":"CCC","displayXmlns": "uri:iso.org:21090"}
+
+c["benign"] = {"code":"RID15654","displayValue":"benign","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["cavitated"] = {"code":"RID46014","displayValue":"cavitated","codeSystemName":"CCC","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["confluent"] = {"code":"74832004","displayValue":"confluent","codeSystemName":"SRT","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["cyst"] = {"code":"RID3890","displayValue":"cyst","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["ground-glass sign"] = {"code":"RID35248","displayValue":"ground-glass sign","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["heterogenous"] = {"code":"RID6060","displayValue":"heterogenous","codeSystemName":"CCC","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["necrosis"] = {"code":"RID5171","displayValue":"necrosis","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["organized chaos"] = {"code":"RID49499","displayValue":"organized chaos","codeSystemName":"CCC","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+c["solid"] = {"code":"RID5741","displayValue":"solid","codeSystemName":"RadLex","codeSystemVersion":"1.0","displayXmlns": "uri:iso.org:21090"}
+c["no finding"] = {"code":"no finding","displayValue":"no finding","codeSystemName":"CCC","codeSystemVersion": "","displayXmlns": "uri:iso.org:21090"}
+
 
 exports.charDict = c;

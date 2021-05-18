@@ -124,7 +124,7 @@ module.exports = function CCC2017jsonToAim(jsonObj){
         "ImagingObservationEntity": [theChar]
     };
 
-    thePhys = (getCharacteristicsData("Location", "jsonObj['anatomy']" ))
+    thePhys = (getCharacteristicsData("Location", jsonObj['anatomy'] ))
     seedData.aim.imagingPhysicalEntityCollection = {
         "ImagingPhysicalEntity": [thePhys]
     };    
